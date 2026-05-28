@@ -49,6 +49,7 @@ export default function MemberDetail() {
         notes: enriched.notes || "",
         address: enriched.address || "",
         emergency_contact: enriched.emergency_contact || "",
+        birth_date: enriched.birth_date || "",
       });
       const pay = await api.listPayments(id);
       setPayments(pay);
@@ -76,6 +77,7 @@ export default function MemberDetail() {
         notes: edit.notes || null,
         address: edit.address || null,
         emergency_contact: edit.emergency_contact || null,
+        birth_date: edit.birth_date || null,
       };
       if (edit.height_cm) payload.height_cm = parseFloat(edit.height_cm);
       if (edit.weight_kg) payload.weight_kg = parseFloat(edit.weight_kg);
@@ -254,6 +256,7 @@ export default function MemberDetail() {
               <EditField label="NOTES" value={edit.notes} onChangeText={(v: string) => setEdit({ ...edit, notes: v })} multiline />
               <EditField label="ADDRESS" value={edit.address} onChangeText={(v: string) => setEdit({ ...edit, address: v })} multiline />
               <EditField label="EMERGENCY CONTACT" value={edit.emergency_contact} onChangeText={(v: string) => setEdit({ ...edit, emergency_contact: v })} placeholder="Name & phone" />
+              <EditField label="BIRTH DATE (YYYY-MM-DD)" value={edit.birth_date} onChangeText={(v: string) => setEdit({ ...edit, birth_date: v })} placeholder="1998-05-28" />
 
               <TouchableOpacity testID="save-edit-btn" style={styles.saveBtn} onPress={save} disabled={busy}>
                 {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>SAVE CHANGES</Text>}

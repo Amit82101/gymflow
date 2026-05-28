@@ -23,19 +23,22 @@ export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
   const [revenue, setRevenue] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<any[]>([]);
+  const [milestones, setMilestones] = useState<{ birthdays: any[]; anniversaries: any[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const [s, r, a] = await Promise.all([
+      const [s, r, a, m] = await Promise.all([
         api.dashboardStats(),
         api.revenueAnalytics(6),
         api.attendanceAnalytics(7),
+        api.milestones(7),
       ]);
       setStats(s);
       setRevenue(r);
       setAttendance(a);
+      setMilestones(m);
     } catch (e) {
       console.warn(e);
     }
@@ -158,6 +161,34 @@ export default function Dashboard() {
                 onPress={() => router.push("/(tabs)/fees")}
               />
             </View>
+
+            {milestones && (milestones.birthdays.length > 0 || milestones.anniversaries.length > 0) && (
+              <TouchableOpacity
+                testID="milestones-banner"
+                style={styles.milestoneBanner}
+                onPress={() => router.push("/milestones")}
+                activeOpacity={0.85}
+              >
+                <View style={styles.milestoneIcon}>
+                  <Ionicons name="gift" size={22} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.milestoneTitle}>
+                    {milestones.birthdays.filter((b) => b.days_until === 0).length +
+                      milestones.anniversaries.filter((a) => a.days_until === 0).length >
+                    0
+                      ? "🎉 Celebrate today"
+                      : "Upcoming celebrations this week"}
+                  </Text>
+                  <Text style={styles.milestoneSub}>
+                    {milestones.birthdays.length} birthday{milestones.birthdays.length === 1 ? "" : "s"} ·{" "}
+                    {milestones.anniversaries.length} anniversar{milestones.anniversaries.length === 1 ? "y" : "ies"}{" "}
+                    · Tap to send WhatsApp wishes
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
 
             <SectionHeader title="Attendance · Last 7 days" />
             <Card>
@@ -294,6 +325,26 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   qaLabel: { color: "#fff", fontSize: 10, fontWeight: "800", letterSpacing: 1, textAlign: "center" },
+  milestoneBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    padding: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.primary + "55",
+  },
+  milestoneIcon: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: "rgba(255,59,48,0.12)",
+    borderWidth: 1, borderColor: colors.primary + "55",
+    alignItems: "center", justifyContent: "center",
+  },
+  milestoneTitle: { color: "#fff", fontSize: 14, fontWeight: "800" },
+  milestoneSub: { color: colors.textSecondary, fontSize: 11, marginTop: 2 },
 });
 
 // reuse shared SectionHeader wrapper with consistent padding

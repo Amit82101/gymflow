@@ -130,6 +130,7 @@ class MemberCreate(BaseModel):
     notes: Optional[str] = None
     address: Optional[str] = None
     emergency_contact: Optional[str] = None
+    birth_date: Optional[str] = None  # ISO date
 
 
 class MemberUpdate(BaseModel):
@@ -145,6 +146,7 @@ class MemberUpdate(BaseModel):
     is_active: Optional[bool] = None
     address: Optional[str] = None
     emergency_contact: Optional[str] = None
+    birth_date: Optional[str] = None
 
 
 class CheckInRequest(BaseModel):
@@ -244,6 +246,7 @@ async def create_member(payload: MemberCreate, current=Depends(get_current_admin
         "notes": payload.notes,
         "address": payload.address,
         "emergency_contact": payload.emergency_contact,
+        "birth_date": payload.birth_date,
         "qr_payload": qr_payload,
         "qr_image": qr_image,
         "is_active": True,
@@ -251,6 +254,70 @@ async def create_member(payload: MemberCreate, current=Depends(get_current_admin
     }
     await db.members.insert_one(member.copy())
     return member
+
+
+@api.get("/members/milestones")
+async def member_milestones(window_days: int = 7, current=Depends(get_current_admin)):
+    """Today and upcoming-N-days birthdays + membership anniversaries."""
+    now = datetime.now(timezone.utc).date()
+    members = await db.members.find({}, {"_id": 0}).to_list(2000)
+
+    def days_until_anniversary(iso_date: str) -> Optional[int]:
+        try:
+            d = datetime.fromisoformat(iso_date).date()
+        except Exception:
+            return None
+        this_year = d.replace(year=now.year)
+        if this_year < now:
+            this_year = d.replace(year=now.year + 1)
+        return (this_year - now).days
+
+    birthdays = []
+    anniversaries = []
+    for m in members:
+        if m.get("birth_date"):
+            d = days_until_anniversary(m["birth_date"])
+            if d is not None and 0 <= d <= window_days:
+                try:
+                    bd = datetime.fromisoformat(m["birth_date"]).date()
+                    age = now.year - bd.year + (0 if d > 0 else 0)
+                    if d > 0:
+                        age = now.year - bd.year  # will turn this in `d` days
+                    else:
+                        age = now.year - bd.year  # turning today
+                except Exception:
+                    age = None
+                birthdays.append({
+                    "member_id": m["id"],
+                    "name": m["name"],
+                    "phone": m.get("phone"),
+                    "photo": m.get("photo"),
+                    "days_until": d,
+                    "date": m["birth_date"],
+                    "age_turning": age,
+                })
+        if m.get("join_date"):
+            try:
+                jd = datetime.fromisoformat(m["join_date"]).date()
+            except Exception:
+                jd = None
+            if jd and jd.year < now.year:
+                d = days_until_anniversary(m["join_date"])
+                if d is not None and 0 <= d <= window_days:
+                    years = now.year - jd.year
+                    anniversaries.append({
+                        "member_id": m["id"],
+                        "name": m["name"],
+                        "phone": m.get("phone"),
+                        "photo": m.get("photo"),
+                        "days_until": d,
+                        "date": m["join_date"],
+                        "years": years,
+                    })
+
+    birthdays.sort(key=lambda x: x["days_until"])
+    anniversaries.sort(key=lambda x: x["days_until"])
+    return {"birthdays": birthdays, "anniversaries": anniversaries}
 
 
 @api.get("/members/{member_id}")

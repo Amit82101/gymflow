@@ -80,6 +80,7 @@ export const api = {
       body: JSON.stringify({ qr_data: qrData }),
     }),
   memberQR: (memberId: string) => request<any>(`/members/${memberId}/qr`),
+  milestones: (windowDays = 7) => request<{ birthdays: any[]; anniversaries: any[] }>(`/members/milestones?window_days=${windowDays}`),
   peakHours: (days = 7) => request<any[]>(`/analytics/peak-hours?days=${days}`),
   absentMembers: (days = 14) => request<any[]>(`/analytics/absent-members?days=${days}`),
 

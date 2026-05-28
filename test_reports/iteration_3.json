@@ -1,0 +1,28 @@
+{
+  "summary": "Iteration 3 (Milestones: Birthday & Membership Anniversary WhatsApp wishes) tested end-to-end. Backend: 49/49 pytest pass (38 prior regression + 11 new milestone tests). New tests cover: GET /members/milestones unauth=401, route order (does NOT 404 as 'Member not found'), POST /members persists birth_date and PUT updates it (GET round-trip verified), today birthday returns days_until=0 with age_turning, +3d birthday returns days_until=3, +2d anniversary returns days_until=2 with years>=1, members joined this year EXCLUDED from anniversaries, lists sorted by days_until ascending, all entries within 0..7 window, all required fields present (member_id, name, phone, photo, days_until, date, age_turning|years). Frontend (420x900): login -> dashboard shows milestones-banner '2 birthdays · 1 anniversary · Tap to send WhatsApp wishes'; tapping navigates to /milestones; BIRTHDAYS section renders Rahul Sharma (TODAY, Turning 28) and Priya Patel (IN 3D, Turning 25) with testIDs birthday-{id} + birthday-{id}-send; MEMBERSHIP ANNIVERSARIES section renders Arjun Mehta (IN 2D, 1-year member) with anniv-{id} + anniv-{id}-send; SEND WISH buttons visible and enabled. /member/new has input-birthdate; submitting with birth_date=today (1995-05-28) succeeds, new member appears in milestones list as 'Turning 31 · TODAY'. /member/{id} edit form has birth_date editable field that round-trips correctly (created via API with birth_date=1992-08-15, edit form shows value=1992-08-15). All previously-passing tests still pass — no regression.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_gymflow_api.py",
+    "/app/backend/tests/test_gymflow_qr.py",
+    "/app/backend/tests/test_gymflow_milestones.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py member_milestones age_turning calculation (lines 283-287): the inner if/else both compute `age = now.year - bd.year` — identical branches, the `+ (0 if d > 0 else 0)` is a no-op. Functionally correct but redundant. For people whose birthday is later this calendar year (d > 0), the current age is `now.year - bd.year - 1`; the field is labeled 'age_turning' so returning `now.year - bd.year` is technically correct (the age they'll be on their next birthday) — clarify the docstring/intent.",
+    "milestones.tsx: SEND WISH uses Linking.canOpenURL('whatsapp://...') with wa.me fallback — on web (Linking.canOpenURL rejects) the fallback path triggers as expected; verified button enabled in headless preview."
+  ],
+  "updated_files": ["/app/backend/tests/test_gymflow_milestones.py"],
+  "success_rate": {"backend": "100% (49/49)", "frontend": "100%"},
+  "seed_data_creation": "Created ephemeral TEST_* members via API + UI flow (TEST_FE_Birth, TEST_EditBD, TEST_BIRTH1, TEST_BDAYTODAY, TEST_BDAY3D, TEST_ANNIV2D, TEST_ANNIVSAME). All cleaned up via DELETE /api/members/{id} in teardown.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Milestone backend + UI fully working. testIDs: milestones-banner (dashboard), milestones-back, birthday-{id}, birthday-{id}-send, anniv-{id}, anniv-{id}-send, input-birthdate (member/new), edit-btn (member/[id]). Member edit form has no explicit testID on birthdate input — it is identified by placeholder='1998-05-28'. If main agent wants stricter assertion, add testID='edit-input-birthdate' on the EditField for birth_date in /app/frontend/app/member/[id]/index.tsx line 259.",
+  "rca_of_issue": "N/A — no bugs found this iteration."
+}

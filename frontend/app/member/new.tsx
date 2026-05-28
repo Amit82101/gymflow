@@ -35,6 +35,9 @@ export default function NewMember() {
     height_cm: "",
     weight_kg: "",
     notes: "",
+    address: "",
+    emergency_contact: "",
+    birth_date: "",
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -63,6 +66,7 @@ export default function NewMember() {
         notes: form.notes || undefined,
         address: form.address || undefined,
         emergency_contact: form.emergency_contact || undefined,
+        birth_date: form.birth_date || undefined,
       };
       if (form.height_cm) payload.height_cm = parseFloat(form.height_cm);
       if (form.weight_kg) payload.weight_kg = parseFloat(form.weight_kg);
@@ -134,6 +138,7 @@ export default function NewMember() {
           <Field label="NOTES" value={form.notes} onChangeText={(v) => setField("notes", v)} placeholder="Fitness goals, medical notes..." multiline testID="input-notes" />
           <Field label="ADDRESS" value={form.address} onChangeText={(v) => setField("address", v)} placeholder="Street, city" multiline testID="input-address" />
           <Field label="EMERGENCY CONTACT" value={form.emergency_contact} onChangeText={(v) => setField("emergency_contact", v)} placeholder="Name & phone" testID="input-emergency" />
+          <Field label="BIRTH DATE (YYYY-MM-DD)" value={form.birth_date} onChangeText={(v) => setField("birth_date", v)} placeholder="1998-05-28" testID="input-birthdate" />
 
           <TouchableOpacity testID="save-member-btn" style={styles.submit} onPress={submit} disabled={busy}>
             {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>CREATE & GENERATE QR</Text>}
