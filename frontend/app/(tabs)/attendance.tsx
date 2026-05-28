@@ -84,14 +84,24 @@ export default function Attendance() {
           <Text style={styles.title}>ATTENDANCE</Text>
           <Text style={styles.sub}>Today · {new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}</Text>
         </View>
-        <TouchableOpacity
-          testID="open-checkin-btn"
-          style={styles.addBtn}
-          onPress={() => setModal(true)}
-        >
-          <Ionicons name="add" size={22} color="#fff" />
-          <Text style={styles.addBtnText}>CHECK-IN</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <TouchableOpacity
+            testID="scan-qr-btn"
+            style={[styles.addBtn, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.primary }]}
+            onPress={() => router.push("/scanner")}
+          >
+            <Ionicons name="qr-code" size={18} color={colors.primary} />
+            <Text style={[styles.addBtnText, { color: colors.primary }]}>SCAN</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="open-checkin-btn"
+            style={styles.addBtn}
+            onPress={() => setModal(true)}
+          >
+            <Ionicons name="add" size={22} color="#fff" />
+            <Text style={styles.addBtnText}>MANUAL</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.statRow}>
