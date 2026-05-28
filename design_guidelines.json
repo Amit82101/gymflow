@@ -1,0 +1,78 @@
+{
+  "theme": "Dark Mode (Default)",
+  "archetype": "2 (Performance Pro)",
+  "domain": "Fitness, Gym, Athletics",
+  "mood": "Elite, High-energy, Premium, Authoritative",
+  "colors": {
+    "background": "#0A0A0A",
+    "surface": "#141414",
+    "surface_secondary": "#1E1E1E",
+    "primary_accent": "#FF3B30",
+    "primary_accent_hover": "#FF5249",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#A1A1AA",
+    "border": "#27272A",
+    "success": "#10B981",
+    "warning": "#F59E0B",
+    "error": "#EF4444"
+  },
+  "typography": {
+    "heading_font": "Barlow Condensed, sans-serif",
+    "body_font": "Inter, sans-serif",
+    "h1": "text-4xl font-black tracking-tight text-white uppercase",
+    "h2": "text-2xl font-bold tracking-tight text-white uppercase",
+    "h3": "text-xl font-bold tracking-tight text-white",
+    "body": "text-base font-normal text-zinc-300",
+    "small_label": "text-xs font-semibold tracking-widest uppercase text-zinc-400"
+  },
+  "layout_and_spacing": {
+    "container_strategy": "Mobile-first approach. Use `w-full max-w-md mx-auto min-h-screen bg-zinc-950 pb-20 relative` for the main wrapper to simulate the mobile app feel.",
+    "bento_grid": "grid grid-cols-2 gap-4",
+    "card": "bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col relative overflow-hidden",
+    "padding_standard": "p-4 md:p-6"
+  },
+  "components_instructions": {
+    "bottom_navigation": "Fixed at the bottom `fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50`. Use `backdrop-blur-xl bg-black/80 border-t border-zinc-800`. Include 4 action items: Dashboard, Members, Attendance, Fees. The active state must use the `#FF3B30` accent color with a subtle drop shadow.",
+    "bento_stat_cards": "Use flat dark surfaces (`bg-zinc-900`). Highlight the primary statistic in 'Barlow Condensed' at `text-3xl` to `text-4xl`. Add a subtle 1px inner stroke `ring-1 ring-white/5` instead of deep shadows.",
+    "member_list_item": "Row layout. Left: Avatar `w-12 h-12 rounded-full object-cover`. Middle: Name (text-white) & Plan details (text-zinc-400 text-sm). Right: Status Badge (e.g., Active/Expiring).",
+    "status_badge": "Small rounded pill. Example for active: `bg-green-500/10 text-green-500 ring-1 ring-green-500/20 px-2 py-1 text-xs rounded-full`.",
+    "charts": "Use Recharts (LineChart/BarChart) for analytics. Keep grid lines hidden or extremely subtle (`stroke-zinc-800`). The line/bar color must be `#FF3B30` with a subtle gradient fill underneath.",
+    "forms_inputs": "Use Shadcn inputs but force dark theme overrides: `bg-zinc-900 border-zinc-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-white rounded-xl h-12`. Do not use native HTML form elements for complex inputs.",
+    "buttons": "Primary CTA: `bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl h-12 w-full uppercase tracking-wider`. Keep it flat and sharp, no soft neumorphic shadows."
+  },
+  "motion_and_interactions": {
+    "interaction_states": "Since this is mobile-focused, rely heavily on active/press states: `active:scale-95 transition-transform duration-150`.",
+    "page_transitions": "Implement smooth fade-in or slide-up animations for navigating between the bottom tabs using framer-motion.",
+    "micro_interactions": "Check-in and Mark-as-Paid buttons should have a quick success pulse animation or a checkmark transition when clicked."
+  },
+  "image_urls": {
+    "login_background": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/b6f57d58-421b-4d6b-9bb5-62846693bb96/images/74e29d95a1874da80f0624ec3267c0fa2bc4099536540eed6dd252fb9801a6df.png",
+      "description": "Cinematic wide-angle shot of a premium, modern dark gym interior for the Admin Login screen hero background. Add a `bg-black/50` to `bg-black/80` overlay to ensure form contrast.",
+      "category": "hero_background"
+    },
+    "texture_overlay": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/b6f57d58-421b-4d6b-9bb5-62846693bb96/images/78a560bcdfed70c8a4a75056d8c2ea53b7170352d0b53d172ef7b1807f4643e8.png",
+      "description": "Abstract dark athletic texture for top header overlays, profile backgrounds, or premium accent cards.",
+      "category": "texture"
+    },
+    "member_avatar_1": {
+      "url": "https://images.unsplash.com/photo-1592746064728-44d4de9dc70a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwyfHxmaXRuZXNzJTIwdHJhaW5lciUyMGRhcmslMjBwb3J0cmFpdHxlbnwwfHx8fDE3Nzk5ODE1NDd8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Male fitness member avatar in dark lighting.",
+      "category": "avatar"
+    },
+    "member_avatar_2": {
+      "url": "https://images.unsplash.com/photo-1634735274669-113558eb6b8a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwzfHxmaXRuZXNzJTIwdHJhaW5lciUyMGRhcmslMjBwb3J0cmFpdHxlbnwwfHx8fDE3Nzk5ODE1NDd8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Female fitness member avatar sitting down.",
+      "category": "avatar"
+    },
+    "member_avatar_3": {
+      "url": "https://images.pexels.com/photos/17706040/pexels-photo-17706040.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Muscular male member avatar lifting weights.",
+      "category": "avatar"
+    }
+  },
+  "testing": {
+    "rules": "All interactive and key informational elements MUST include a `data-testid` attribute (e.g., `data-testid=\"login-form-submit-button\"`, `data-testid=\"member-item\"`, `data-testid=\"bottom-nav-dashboard\"`) to ensure robust end-to-end testing."
+  }
+}
