@@ -13,12 +13,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
 import { EmptyState } from "@/src/components/ui";
 
 export default function Attendance() {
+  const router = useRouter();
   const [records, setRecords] = useState<any[]>([]);
   const [allMembers, setAllMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

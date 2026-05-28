@@ -47,6 +47,8 @@ export default function MemberDetail() {
         height_cm: enriched.height_cm ? String(enriched.height_cm) : "",
         weight_kg: enriched.weight_kg ? String(enriched.weight_kg) : "",
         notes: enriched.notes || "",
+        address: enriched.address || "",
+        emergency_contact: enriched.emergency_contact || "",
       });
       const pay = await api.listPayments(id);
       setPayments(pay);
@@ -72,6 +74,8 @@ export default function MemberDetail() {
         plan: edit.plan,
         fee_amount: parseFloat(edit.fee_amount) || 0,
         notes: edit.notes || null,
+        address: edit.address || null,
+        emergency_contact: edit.emergency_contact || null,
       };
       if (edit.height_cm) payload.height_cm = parseFloat(edit.height_cm);
       if (edit.weight_kg) payload.weight_kg = parseFloat(edit.weight_kg);
@@ -151,6 +155,17 @@ export default function MemberDetail() {
 
           {!editMode ? (
             <>
+              <View style={{ flexDirection: "row", gap: 10, marginBottom: spacing.lg }}>
+                <TouchableOpacity
+                  testID="view-qr-btn"
+                  style={styles.primaryAction}
+                  onPress={() => router.push(`/member/${id}/qr`)}
+                >
+                  <Ionicons name="qr-code" size={18} color="#fff" />
+                  <Text style={styles.primaryActionText}>VIEW QR & SEND</Text>
+                </TouchableOpacity>
+              </View>
+
               <View style={styles.statGrid}>
                 <InfoTile label="PLAN" value={(member.plan || "—").toUpperCase()} />
                 <InfoTile label="FEE" value={fmt(member.fee_amount)} />
@@ -159,6 +174,23 @@ export default function MemberDetail() {
                 <InfoTile label="BMI" value={member.bmi ? String(member.bmi) : "—"} />
                 <InfoTile label="WEIGHT" value={member.weight_kg ? `${member.weight_kg} kg` : "—"} />
               </View>
+
+              {(member.address || member.emergency_contact) && (
+                <View style={[styles.notesCard, { marginTop: spacing.lg }]}>
+                  {member.address ? (
+                    <>
+                      <Text style={styles.label}>ADDRESS</Text>
+                      <Text style={styles.notesText}>{member.address}</Text>
+                    </>
+                  ) : null}
+                  {member.emergency_contact ? (
+                    <>
+                      <Text style={[styles.label, member.address ? { marginTop: spacing.md } : null]}>EMERGENCY CONTACT</Text>
+                      <Text style={styles.notesText}>{member.emergency_contact}</Text>
+                    </>
+                  ) : null}
+                </View>
+              )}
 
               {member.notes && (
                 <View style={styles.notesCard}>
@@ -220,6 +252,8 @@ export default function MemberDetail() {
                 </View>
               </View>
               <EditField label="NOTES" value={edit.notes} onChangeText={(v: string) => setEdit({ ...edit, notes: v })} multiline />
+              <EditField label="ADDRESS" value={edit.address} onChangeText={(v: string) => setEdit({ ...edit, address: v })} multiline />
+              <EditField label="EMERGENCY CONTACT" value={edit.emergency_contact} onChangeText={(v: string) => setEdit({ ...edit, emergency_contact: v })} placeholder="Name & phone" />
 
               <TouchableOpacity testID="save-edit-btn" style={styles.saveBtn} onPress={save} disabled={busy}>
                 {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>SAVE CHANGES</Text>}
@@ -286,4 +320,9 @@ const styles = StyleSheet.create({
   planText: { color: colors.textSecondary, fontSize: 11, fontWeight: "800", letterSpacing: 1 },
   saveBtn: { marginTop: spacing.xl, backgroundColor: colors.primary, borderRadius: radius.md, height: 54, alignItems: "center", justifyContent: "center" },
   saveText: { color: "#fff", fontWeight: "900", letterSpacing: 2, fontSize: 14 },
+  primaryAction: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    height: 50, borderRadius: radius.md, backgroundColor: colors.primary,
+  },
+  primaryActionText: { color: "#fff", fontWeight: "900", letterSpacing: 1.5, fontSize: 13 },
 });

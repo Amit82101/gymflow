@@ -137,18 +137,18 @@ export default function Dashboard() {
             <SectionHeader title="Quick Actions" />
             <View style={styles.qaRow}>
               <QuickAction
+                testID="qa-scan"
+                icon="qr-code"
+                label="SCAN QR"
+                color={colors.primary}
+                onPress={() => router.push("/scanner")}
+              />
+              <QuickAction
                 testID="qa-add-member"
                 icon="person-add"
                 label="ADD MEMBER"
-                color={colors.primary}
+                color={colors.info}
                 onPress={() => router.push("/member/new")}
-              />
-              <QuickAction
-                testID="qa-checkin"
-                icon="scan"
-                label="CHECK-IN"
-                color={colors.success}
-                onPress={() => router.push("/(tabs)/attendance")}
               />
               <QuickAction
                 testID="qa-fees"

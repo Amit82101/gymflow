@@ -81,6 +81,20 @@ export default function Analytics() {
         </Card>
 
         <Card style={{ marginBottom: spacing.lg }}>
+          <Text style={styles.cardLabel}>PEAK HOURS · LAST 7 DAYS</Text>
+          <Text style={styles.cardValue}>
+            {(() => {
+              const top = [...peakHours].sort((a, b) => b.value - a.value)[0];
+              return top && top.value > 0 ? `${top.label}:00` : "—";
+            })()}{" "}
+            <Text style={{ fontSize: 14, color: colors.textSecondary }}>busiest hour</Text>
+          </Text>
+          <View style={{ marginTop: spacing.md }}>
+            <BarChart data={peakHours.filter((_, i) => i >= 5 && i <= 22)} accent={colors.warning} height={120} />
+          </View>
+        </Card>
+
+        <Card style={{ marginBottom: spacing.lg }}>
           <Text style={styles.cardLabel}>MEMBER GROWTH</Text>
           <Text style={styles.cardValue}>{stats?.total_members ?? 0} <Text style={{ fontSize: 14, color: colors.textSecondary }}>total</Text></Text>
           <View style={{ marginTop: spacing.md }}>

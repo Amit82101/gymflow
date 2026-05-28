@@ -74,6 +74,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ member_id: memberId }),
     }),
+  scanQR: (qrData: string) =>
+    request<any>("/attendance/scan", {
+      method: "POST",
+      body: JSON.stringify({ qr_data: qrData }),
+    }),
+  memberQR: (memberId: string) => request<any>(`/members/${memberId}/qr`),
+  peakHours: (days = 7) => request<any[]>(`/analytics/peak-hours?days=${days}`),
+  absentMembers: (days = 14) => request<any[]>(`/analytics/absent-members?days=${days}`),
 
   // payments
   listPayments: (memberId?: string) => {

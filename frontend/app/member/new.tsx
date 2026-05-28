@@ -61,11 +61,14 @@ export default function NewMember() {
         fee_amount: parseFloat(form.fee_amount) || 0,
         photo: photo || undefined,
         notes: form.notes || undefined,
+        address: form.address || undefined,
+        emergency_contact: form.emergency_contact || undefined,
       };
       if (form.height_cm) payload.height_cm = parseFloat(form.height_cm);
       if (form.weight_kg) payload.weight_kg = parseFloat(form.weight_kg);
-      await api.createMember(payload);
-      router.back();
+      const created = await api.createMember(payload);
+      // Go directly to the QR card for sending via WhatsApp
+      router.replace(`/member/${created.id}/qr`);
     } catch (e: any) {
       Alert.alert("Failed", e.message);
     } finally {
@@ -129,9 +132,11 @@ export default function NewMember() {
           </View>
 
           <Field label="NOTES" value={form.notes} onChangeText={(v) => setField("notes", v)} placeholder="Fitness goals, medical notes..." multiline testID="input-notes" />
+          <Field label="ADDRESS" value={form.address} onChangeText={(v) => setField("address", v)} placeholder="Street, city" multiline testID="input-address" />
+          <Field label="EMERGENCY CONTACT" value={form.emergency_contact} onChangeText={(v) => setField("emergency_contact", v)} placeholder="Name & phone" testID="input-emergency" />
 
           <TouchableOpacity testID="save-member-btn" style={styles.submit} onPress={submit} disabled={busy}>
-            {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>CREATE MEMBER</Text>}
+            {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>CREATE & GENERATE QR</Text>}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

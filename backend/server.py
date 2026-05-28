@@ -12,6 +12,10 @@ import uuid
 from datetime import datetime, timedelta, timezone, date
 import bcrypt
 import jwt
+import qrcode
+import io
+import base64
+import json as _json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -83,6 +87,24 @@ def plan_duration_days(plan: str) -> int:
     return {"monthly": 30, "quarterly": 90, "yearly": 365}.get(plan, 30)
 
 
+GYM_NAME = os.environ.get("GYM_NAME", "GymFlow")
+DUPLICATE_WINDOW_MIN = int(os.environ.get("DUPLICATE_WINDOW_MIN", "10"))
+
+
+def make_qr_payload(member_id: str, name: str, expiry: str) -> str:
+    return _json.dumps({"v": 1, "g": GYM_NAME, "id": member_id, "n": name, "exp": expiry})
+
+
+def make_qr_image_b64(payload: str) -> str:
+    qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=10, border=2)
+    qr.add_data(payload)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
 # ============== MODELS ==============
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -106,6 +128,8 @@ class MemberCreate(BaseModel):
     height_cm: Optional[float] = None
     weight_kg: Optional[float] = None
     notes: Optional[str] = None
+    address: Optional[str] = None
+    emergency_contact: Optional[str] = None
 
 
 class MemberUpdate(BaseModel):
@@ -119,10 +143,16 @@ class MemberUpdate(BaseModel):
     weight_kg: Optional[float] = None
     notes: Optional[str] = None
     is_active: Optional[bool] = None
+    address: Optional[str] = None
+    emergency_contact: Optional[str] = None
 
 
 class CheckInRequest(BaseModel):
     member_id: str
+
+
+class QRScanRequest(BaseModel):
+    qr_data: str  # raw scanned text (JSON payload)
 
 
 class PaymentCreate(BaseModel):
@@ -194,8 +224,11 @@ async def create_member(payload: MemberCreate, current=Depends(get_current_admin
     join_date = payload.join_date or datetime.now(timezone.utc).date().isoformat()
     join_d = datetime.fromisoformat(join_date).date()
     expiry_d = join_d + timedelta(days=plan_duration_days(payload.plan))
+    member_id = str(uuid.uuid4())
+    qr_payload = make_qr_payload(member_id, payload.name, expiry_d.isoformat())
+    qr_image = make_qr_image_b64(qr_payload)
     member = {
-        "id": str(uuid.uuid4()),
+        "id": member_id,
         "name": payload.name,
         "email": payload.email,
         "phone": payload.phone,
@@ -209,6 +242,10 @@ async def create_member(payload: MemberCreate, current=Depends(get_current_admin
         "weight_kg": payload.weight_kg,
         "bmi": calc_bmi(payload.height_cm, payload.weight_kg),
         "notes": payload.notes,
+        "address": payload.address,
+        "emergency_contact": payload.emergency_contact,
+        "qr_payload": qr_payload,
+        "qr_image": qr_image,
         "is_active": True,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -253,7 +290,108 @@ async def delete_member(member_id: str, current=Depends(get_current_admin)):
     return {"ok": True}
 
 
+@api.get("/members/{member_id}/qr")
+async def member_qr(member_id: str, current=Depends(get_current_admin)):
+    m = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not m:
+        raise HTTPException(status_code=404, detail="Member not found")
+    if not m.get("qr_image"):
+        payload = make_qr_payload(m["id"], m["name"], m.get("expiry_date", ""))
+        img = make_qr_image_b64(payload)
+        await db.members.update_one({"id": member_id}, {"$set": {"qr_payload": payload, "qr_image": img}})
+        m["qr_payload"] = payload
+        m["qr_image"] = img
+    return {
+        "member_id": m["id"],
+        "name": m["name"],
+        "phone": m.get("phone"),
+        "gym": GYM_NAME,
+        "expiry_date": m.get("expiry_date"),
+        "qr_payload": m["qr_payload"],
+        "qr_image": m["qr_image"],
+    }
+
+
 # ============== ATTENDANCE ==============
+@api.post("/attendance/scan")
+async def scan_attendance(payload: QRScanRequest, current=Depends(get_current_admin)):
+    # Parse QR payload — accept JSON or raw member id
+    member_id: Optional[str] = None
+    try:
+        data = _json.loads(payload.qr_data)
+        if isinstance(data, dict):
+            member_id = data.get("id")
+    except Exception:
+        member_id = payload.qr_data.strip()
+
+    if not member_id:
+        raise HTTPException(status_code=400, detail="Invalid QR code")
+
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+
+    now = datetime.now(timezone.utc)
+    today_str = now.date().isoformat()
+
+    # Membership validity
+    exp = member.get("expiry_date")
+    exp_date = datetime.fromisoformat(exp).date() if exp else None
+    expired = exp_date is not None and exp_date < now.date()
+    if expired:
+        return {
+            "status": "expired",
+            "message": "Membership Expired — attendance blocked",
+            "member": member,
+            "attendance": None,
+        }
+
+    # Duplicate scan window
+    recent = await db.attendance.find(
+        {"member_id": member_id, "date": today_str},
+        {"_id": 0},
+    ).sort("check_in_time", -1).to_list(5)
+    if recent:
+        last = recent[0]
+        last_in = datetime.fromisoformat(last["check_in_time"])
+        minutes_since = (now - last_in).total_seconds() / 60
+        if not last.get("check_out_time") and minutes_since < DUPLICATE_WINDOW_MIN:
+            return {
+                "status": "duplicate",
+                "message": f"Already checked in {int(minutes_since)} min ago",
+                "member": member,
+                "attendance": last,
+            }
+        # Auto check-out if still inside and >= duplicate window
+        if not last.get("check_out_time"):
+            await db.attendance.update_one(
+                {"id": last["id"]},
+                {"$set": {"check_out_time": now.isoformat()}},
+            )
+            updated = await db.attendance.find_one({"id": last["id"]}, {"_id": 0})
+            return {
+                "status": "checked_out",
+                "message": "Check-out recorded. See you next time!",
+                "member": member,
+                "attendance": updated,
+            }
+
+    record = {
+        "id": str(uuid.uuid4()),
+        "member_id": member_id,
+        "member_name": member["name"],
+        "date": today_str,
+        "check_in_time": now.isoformat(),
+        "check_out_time": None,
+    }
+    await db.attendance.insert_one(record.copy())
+    return {
+        "status": "checked_in",
+        "message": "Attendance marked successfully",
+        "member": member,
+        "attendance": record,
+    }
+
 @api.post("/attendance/check-in")
 async def check_in(payload: CheckInRequest, current=Depends(get_current_admin)):
     member = await db.members.find_one({"id": payload.member_id}, {"_id": 0})
@@ -484,6 +622,47 @@ async def analytics_member_growth(months: int = 6, current=Depends(get_current_a
         start_label = date(year, month, 1).strftime("%b")
         buckets.append({"label": start_label, "value": count})
     return buckets
+
+
+@api.get("/analytics/peak-hours")
+async def analytics_peak_hours(days: int = 7, current=Depends(get_current_admin)):
+    now = datetime.now(timezone.utc).date()
+    since = (now - timedelta(days=days - 1)).isoformat()
+    records = await db.attendance.find(
+        {"date": {"$gte": since}}, {"_id": 0, "check_in_time": 1}
+    ).to_list(5000)
+    hours = [0] * 24
+    for r in records:
+        try:
+            t = datetime.fromisoformat(r["check_in_time"])
+            hours[t.hour] += 1
+        except Exception:
+            pass
+    return [{"label": f"{h:02d}", "value": v} for h, v in enumerate(hours)]
+
+
+@api.get("/analytics/absent-members")
+async def analytics_absent(days: int = 14, current=Depends(get_current_admin)):
+    now = datetime.now(timezone.utc).date()
+    since = (now - timedelta(days=days)).isoformat()
+    members = await db.members.find({}, {"_id": 0}).to_list(2000)
+    out = []
+    for m in members:
+        last = await db.attendance.find_one(
+            {"member_id": m["id"]}, {"_id": 0}, sort=[("check_in_time", -1)]
+        )
+        last_date = last["date"] if last else None
+        if not last or last_date < since:
+            out.append({
+                "id": m["id"],
+                "name": m["name"],
+                "phone": m.get("phone"),
+                "last_visit": last_date,
+                "days_absent": (now - datetime.fromisoformat(last_date).date()).days if last_date else None,
+            })
+    out.sort(key=lambda x: (x["days_absent"] is None, -(x["days_absent"] or 0)))
+    return out[:50]
+
 
 
 # ============== HEALTH ==============
