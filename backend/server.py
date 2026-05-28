@@ -280,11 +280,7 @@ async def member_milestones(window_days: int = 7, current=Depends(get_current_ad
             if d is not None and 0 <= d <= window_days:
                 try:
                     bd = datetime.fromisoformat(m["birth_date"]).date()
-                    age = now.year - bd.year + (0 if d > 0 else 0)
-                    if d > 0:
-                        age = now.year - bd.year  # will turn this in `d` days
-                    else:
-                        age = now.year - bd.year  # turning today
+                    age = now.year - bd.year
                 except Exception:
                     age = None
                 birthdays.append({
