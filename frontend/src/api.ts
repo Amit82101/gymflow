@@ -1,8 +1,7 @@
 import { storage } from "@/src/utils/storage";
 
 const TOKEN_KEY = "gymflow_admin_token";
-const BASE_URL =
-  process.env.EXPO_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+const BASE_URL = "http://192.168.137.1:8000";
 
 export type ApiError = { detail: string };
 
