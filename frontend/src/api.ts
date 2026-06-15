@@ -1,7 +1,7 @@
 import { storage } from "@/src/utils/storage";
 
 const TOKEN_KEY = "gymflow_admin_token";
-const BASE_URL = "http://192.168.137.1:8000";
+const BASE_URL = "https://gymflow-0d18.onrender.com";
 
 export type ApiError = { detail: string };
 
