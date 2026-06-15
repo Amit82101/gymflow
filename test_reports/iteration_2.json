@@ -1,0 +1,29 @@
+{
+  "summary": "Iteration 2 (QR + Scan + new analytics) tested end-to-end. Backend: 38/38 pytest pass (23 prior regression + 15 new). New tests cover POST /members returning qr_payload+qr_image, GET /members/:id/qr (including 404 + lazy regen), POST /attendance/scan with JSON payload (checked_in) -> duplicate within 10 min -> raw member_id -> invalid id 404 -> expired-member blocked (no record). Analytics: peak-hours returns 24 buckets '00'..'23' with int values, absent-members returns list of {id,name,last_visit,days_absent}, both require auth. Frontend (mobile web, 390x844): login works (note: button testID is 'login-submit-button' not 'login-submit-btn'), dashboard qa-scan navigates to /scanner; web fallback shows simulate-scan; clicking it returns 'CHECKED IN' result sheet with scan-member-name='Rahul Sharma' and scan-again-btn works; members list -> detail -> view-qr-btn -> /member/[id]/qr renders member-qr-image + send-whatsapp-btn (clickable, not disabled); /member/new form has input-address + input-emergency, after save redirects to /member/{id}/qr showing QR + WhatsApp button. One missing UI element: ATTENDANCE tab does NOT show a SCAN button — only CHECK-IN (open-checkin-btn) is present. Demo data 'Vikram Singh' (expired) and 'Ananya Rao' present.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "app/(tabs)/attendance.tsx", "issue": "Attendance screen is missing the 'SCAN' button next to 'CHECK-IN'. Only open-checkin-btn renders in the header. Per problem statement, a scan-btn should navigate to /scanner.", "testID": "scan-btn (expected but absent)", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_gymflow_api.py", "/app/backend/tests/test_gymflow_qr.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Add SCAN button on /attendance screen with testID='scan-btn' that navigates to /scanner (alongside the existing CHECK-IN button).",
+    "Optional: In /app/frontend/app/member/new.tsx the initial form state object does not include 'address' or 'emergency_contact' keys (TextInputs end up uncontrolled until first keystroke). It works functionally but is inconsistent — add address:'' and emergency_contact:'' to initial useState for cleanliness."
+  ],
+  "critical_code_review_comments": [
+    "member/new.tsx: useState initial form lacks 'address' and 'emergency_contact' fields though they are read in submit() and bound via setField. Functionally OK because setField creates them, but TextInputs are briefly uncontrolled. Low risk.",
+    "scanner.tsx web fallback: simulate-scan picks api.listMembers()[0] without filtering — fine for testing, but in production the first member could be inactive/expired; consider clarifying via UI copy.",
+    "qr.tsx: Linking.canOpenURL('whatsapp://...') will reject on web; the catch correctly falls back to wa.me. Verified clickable in headless preview (button not disabled)."
+  ],
+  "updated_files": ["/app/backend/tests/test_gymflow_qr.py"],
+  "success_rate": {"backend": "100%", "frontend": "~90% (missing attendance SCAN button)"},
+  "seed_data_creation": "Created and deleted ephemeral TEST_* members via API tests and UI flow. No residue.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Login button testID is 'login-submit-button' (not 'login-submit-btn'). All other testIDs in problem statement are correct: qa-scan, simulate-scan, scan-member-name, scan-again-btn, view-qr-btn, member-qr-image, send-whatsapp-btn, input-address, input-emergency, save-member-btn. Backend test files: test_gymflow_api.py (regression) + test_gymflow_qr.py (iteration 2 features). Demo data includes 6 members; 'Rahul Sharma' is the first member returned by listMembers (used by simulate-scan).",
+  "rca_of_issue": "Attendance SCAN button missing: app/(tabs)/attendance.tsx never adds a TouchableOpacity with testID='scan-btn'. Header only renders the CHECK-IN button. Fix: insert a sibling button that calls router.push('/scanner')."
+}
