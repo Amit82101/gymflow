@@ -46,10 +46,10 @@ export default function MemberDetail() {
         fee_amount: String(enriched.fee_amount || 0),
         height_cm: enriched.height_cm ? String(enriched.height_cm) : "",
         weight_kg: enriched.weight_kg ? String(enriched.weight_kg) : "",
-        notes: enriched.notes || "",
+        
         address: enriched.address || "",
-        emergency_contact: enriched.emergency_contact || "",
-        birth_date: enriched.birth_date || "",
+        
+        join_date: enriched.join_date || "",
       });
       const pay = await api.listPayments(id);
       setPayments(pay);
@@ -74,10 +74,10 @@ export default function MemberDetail() {
         email: edit.email || null,
         plan: edit.plan,
         fee_amount: parseFloat(edit.fee_amount) || 0,
-        notes: edit.notes || null,
+        
         address: edit.address || null,
-        emergency_contact: edit.emergency_contact || null,
-        birth_date: edit.birth_date || null,
+       
+        join_date: edit.join_date || null,
       };
       if (edit.height_cm) payload.height_cm = parseFloat(edit.height_cm);
       if (edit.weight_kg) payload.weight_kg = parseFloat(edit.weight_kg);
@@ -253,10 +253,10 @@ export default function MemberDetail() {
                   <EditField label="WEIGHT (kg)" value={edit.weight_kg} onChangeText={(v: string) => setEdit({ ...edit, weight_kg: v })} keyboardType="numeric" />
                 </View>
               </View>
-              <EditField label="NOTES" value={edit.notes} onChangeText={(v: string) => setEdit({ ...edit, notes: v })} multiline />
+              
               <EditField label="ADDRESS" value={edit.address} onChangeText={(v: string) => setEdit({ ...edit, address: v })} multiline />
-              <EditField label="EMERGENCY CONTACT" value={edit.emergency_contact} onChangeText={(v: string) => setEdit({ ...edit, emergency_contact: v })} placeholder="Name & phone" />
-              <EditField label="BIRTH DATE (YYYY-MM-DD)" value={edit.birth_date} onChangeText={(v: string) => setEdit({ ...edit, birth_date: v })} placeholder="1998-05-28" />
+              
+              <EditField label="JOIN DATE (YYYY-MM-DD)" value={edit.join_date} onChangeText={(v: string) => setEdit({ ...edit, join_date: v })} placeholder="2023-01-01" />
 
               <TouchableOpacity testID="save-edit-btn" style={styles.saveBtn} onPress={save} disabled={busy}>
                 {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>SAVE CHANGES</Text>}

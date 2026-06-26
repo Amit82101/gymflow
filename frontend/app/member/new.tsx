@@ -19,9 +19,9 @@ import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
 
 const PLANS = [
-  { id: "monthly", label: "MONTHLY", days: 30, default: 1500 },
-  { id: "quarterly", label: "QUARTERLY", days: 90, default: 4000 },
-  { id: "yearly", label: "YEARLY", days: 365, default: 14000 },
+  { id: "monthly", label: "MONTHLY", days: 30, default: 700 },
+  { id: "quarterly", label: "QUARTERLY", days: 90, default: 2800 },
+  { id: "yearly", label: "YEARLY", days: 365, default: 8400 },
 ];
 
 export default function NewMember() {
@@ -31,13 +31,11 @@ export default function NewMember() {
     phone: "",
     email: "",
     plan: "monthly",
-    fee_amount: "1500",
+    fee_amount: "700",
     height_cm: "",
     weight_kg: "",
-    notes: "",
     address: "",
-    emergency_contact: "",
-    birth_date: "",
+    join_date: "",
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -50,9 +48,16 @@ export default function NewMember() {
   };
 
   const submit = async () => {
-    if (!form.name.trim() || !form.phone.trim()) {
-      Alert.alert("Required", "Name and phone are required");
-      return;
+   if (
+  !form.name.trim() ||
+  !form.phone.trim() ||
+  !form.join_date.trim()
+) {
+  Alert.alert(
+    "Required",
+    "Name, Phone and Joining Date are required"
+  );
+  return;
     }
     setBusy(true);
     try {
@@ -63,10 +68,10 @@ export default function NewMember() {
         plan: form.plan,
         fee_amount: parseFloat(form.fee_amount) || 0,
         photo: photo || undefined,
-        notes: form.notes || undefined,
+       
         address: form.address || undefined,
-        emergency_contact: form.emergency_contact || undefined,
-        birth_date: form.birth_date || undefined,
+    
+        join_date: form.join_date.trim(),
       };
       if (form.height_cm) payload.height_cm = parseFloat(form.height_cm);
       if (form.weight_kg) payload.weight_kg = parseFloat(form.weight_kg);
@@ -103,9 +108,9 @@ export default function NewMember() {
             <Text style={styles.avatarHint}>Photo (optional)</Text>
           </View>
 
-          <Field label="FULL NAME *" value={form.name} onChangeText={(v) => setField("name", v)} placeholder="John Doe" testID="input-name" />
-          <Field label="PHONE *" value={form.phone} onChangeText={(v) => setField("phone", v)} placeholder="+91 98765 43210" keyboardType="phone-pad" testID="input-phone" />
-          <Field label="EMAIL" value={form.email} onChangeText={(v) => setField("email", v)} placeholder="john@example.com" keyboardType="email-address" autoCapitalize="none" testID="input-email" />
+          <Field label="FULL NAME *" value={form.name} onChangeText={(v:string) => setField("name", v)} placeholder="John Doe" testID="input-name" />
+          <Field label="PHONE *" value={form.phone} onChangeText={(v:string) => setField("phone", v)} placeholder="+91 98765 43210" keyboardType="phone-pad" testID="input-phone" />
+          <Field label="EMAIL" value={form.email} onChangeText={(v:string) => setField("email", v)} placeholder="john@example.com" keyboardType="email-address" autoCapitalize="none" testID="input-email" />
 
           <Text style={styles.label}>MEMBERSHIP PLAN</Text>
           <View style={styles.planRow}>
@@ -124,21 +129,21 @@ export default function NewMember() {
             ))}
           </View>
 
-          <Field label="FEE AMOUNT (₹)" value={form.fee_amount} onChangeText={(v) => setField("fee_amount", v)} keyboardType="numeric" testID="input-fee" />
+          <Field label="FEE AMOUNT (₹)" value={form.fee_amount} onChangeText={(v:string) => setField("fee_amount", v)} keyboardType="numeric" testID="input-fee" />
 
           <View style={{ flexDirection: "row", gap: 10 }}>
             <View style={{ flex: 1 }}>
-              <Field label="HEIGHT (cm)" value={form.height_cm} onChangeText={(v) => setField("height_cm", v)} keyboardType="numeric" testID="input-height" />
+              <Field label="HEIGHT (cm)" value={form.height_cm} onChangeText={(v:string) => setField("height_cm", v)} keyboardType="numeric" testID="input-height" />
             </View>
             <View style={{ flex: 1 }}>
-              <Field label="WEIGHT (kg)" value={form.weight_kg} onChangeText={(v) => setField("weight_kg", v)} keyboardType="numeric" testID="input-weight" />
+              <Field label="WEIGHT (kg)" value={form.weight_kg} onChangeText={(v:string) => setField("weight_kg", v)} keyboardType="numeric" testID="input-weight" />
             </View>
           </View>
 
-          <Field label="NOTES" value={form.notes} onChangeText={(v) => setField("notes", v)} placeholder="Fitness goals, medical notes..." multiline testID="input-notes" />
-          <Field label="ADDRESS" value={form.address} onChangeText={(v) => setField("address", v)} placeholder="Street, city" multiline testID="input-address" />
-          <Field label="EMERGENCY CONTACT" value={form.emergency_contact} onChangeText={(v) => setField("emergency_contact", v)} placeholder="Name & phone" testID="input-emergency" />
-          <Field label="BIRTH DATE (YYYY-MM-DD)" value={form.birth_date} onChangeText={(v) => setField("birth_date", v)} placeholder="1998-05-28" testID="input-birthdate" />
+          
+          <Field label="ADDRESS" value={form.address} onChangeText={(v:string) => setField("address", v)} placeholder="Street, city" multiline testID="input-address" />
+          
+          <Field label="JOINING DATE (YYYY-MM-DD) *" value={form.join_date} onChangeText={(v:string) => setField("join_date", v)} placeholder="2023-01-01" testID="input-joiningdate" />
 
           <TouchableOpacity testID="save-member-btn" style={styles.submit} onPress={submit} disabled={busy}>
             {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>CREATE & GENERATE QR</Text>}

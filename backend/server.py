@@ -124,13 +124,12 @@ class MemberCreate(BaseModel):
     photo: Optional[str] = None  # base64
     plan: str = "monthly"  # monthly | quarterly | yearly
     fee_amount: float = 0
-    join_date: Optional[str] = None  # ISO date
+    join_date:str   # ISO date
     height_cm: Optional[float] = None
     weight_kg: Optional[float] = None
-    notes: Optional[str] = None
+    
     address: Optional[str] = None
-    emergency_contact: Optional[str] = None
-    birth_date: Optional[str] = None  # ISO date
+    
 
 
 class MemberUpdate(BaseModel):
@@ -142,11 +141,11 @@ class MemberUpdate(BaseModel):
     fee_amount: Optional[float] = None
     height_cm: Optional[float] = None
     weight_kg: Optional[float] = None
-    notes: Optional[str] = None
+   
     is_active: Optional[bool] = None
     address: Optional[str] = None
-    emergency_contact: Optional[str] = None
-    birth_date: Optional[str] = None
+    join_date: str # ISO date
+    
 
 
 class CheckInRequest(BaseModel):
@@ -243,10 +242,10 @@ async def create_member(payload: MemberCreate, current=Depends(get_current_admin
         "height_cm": payload.height_cm,
         "weight_kg": payload.weight_kg,
         "bmi": calc_bmi(payload.height_cm, payload.weight_kg),
-        "notes": payload.notes,
+       
+    
         "address": payload.address,
-        "emergency_contact": payload.emergency_contact,
-        "birth_date": payload.birth_date,
+        
         "qr_payload": qr_payload,
         "qr_image": qr_image,
         "is_active": True,
@@ -325,21 +324,76 @@ async def get_member(member_id: str, current=Depends(get_current_admin)):
 
 
 @api.put("/members/{member_id}")
-async def update_member(member_id: str, payload: MemberUpdate, current=Depends(get_current_admin)):
-    existing = await db.members.find_one({"id": member_id}, {"_id": 0})
+async def update_member(
+    member_id: str,
+    payload: MemberUpdate,
+    current=Depends(get_current_admin)
+):
+    existing = await db.members.find_one(
+        {"id": member_id},
+        {"_id": 0}
+    )
+
     if not existing:
-        raise HTTPException(status_code=404, detail="Member not found")
-    updates = {k: v for k, v in payload.model_dump(exclude_unset=True).items()}
-    if "plan" in updates and updates["plan"]:
-        join_d = datetime.fromisoformat(existing["join_date"]).date()
-        updates["expiry_date"] = (join_d + timedelta(days=plan_duration_days(updates["plan"]))).isoformat()
+        raise HTTPException(
+            status_code=404,
+            detail="Member not found"
+        )
+
+    updates = {
+        k: v
+        for k, v in payload.model_dump(exclude_unset=True).items()
+    }
+
+    # Recalculate expiry if plan or join_date changes
+    if "plan" in updates or "join_date" in updates:
+
+        plan = updates.get(
+            "plan",
+            existing.get("plan", "monthly")
+        )
+
+        join_date = updates.get(
+            "join_date",
+            existing.get("join_date")
+        )
+
+        if join_date:
+            join_d = datetime.fromisoformat(join_date).date()
+
+            updates["expiry_date"] = (
+                join_d +
+                timedelta(days=plan_duration_days(plan))
+            ).isoformat()
+
+    # Recalculate BMI
     if "height_cm" in updates or "weight_kg" in updates:
-        h = updates.get("height_cm", existing.get("height_cm"))
-        w = updates.get("weight_kg", existing.get("weight_kg"))
+        h = updates.get(
+            "height_cm",
+            existing.get("height_cm")
+        )
+
+        w = updates.get(
+            "weight_kg",
+            existing.get("weight_kg")
+        )
+
         updates["bmi"] = calc_bmi(h, w)
-    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
-    await db.members.update_one({"id": member_id}, {"$set": updates})
-    m = await db.members.find_one({"id": member_id}, {"_id": 0})
+
+    updates["updated_at"] = datetime.now(
+        timezone.utc
+    ).isoformat()
+
+    await db.members.update_one(
+        {"id": member_id},
+        {"$set": updates}
+    )
+
+    m = await db.members.find_one(
+        {"id": member_id},
+        {"_id": 0}
+    )
+
     return m
 
 
